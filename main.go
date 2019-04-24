@@ -1,32 +1,38 @@
 package main
 
 import (
-	"net/http"
 	"database/sql"
+	"fmt"
 	"log"
-	_"github.com/go-sql-driver/mysql"
+	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // in main file we will call different handlers and initialize the db.
 
-const  hashCost  =8
-var db*sql.DB
+const hashCost = 8
 
-func main(){
-	// signin and signup handlers we will need
-	http.HandleFunc("/signup",Signup)
-	http.HandleFunc("/signin", Signin)
+var db *sql.DB
+
+func main() {
+
+	http.HandleFunc("/signup", Signup)
+	http.HandleFunc("/login", Login)
+	http.HandleFunc("/", Homepage)
+	http.HandleFunc("/register", Register)
+	http.HandleFunc("/stored", Storedb)
 	// initialize database
 	initDB()
-	//start the server on 8085 port (considering k8s will run something on 8080)
-	log.Fatal(http.ListenAndServe(":8085",nil))
+	log.Fatal(http.ListenAndServe(":8085", nil))
 }
 
-func  initDB()  {
+func initDB() {
 	var err error
-	//connect to db
-	db,err=sql.Open("mysql","dbname =    sslmode=disable")
-	if err!=nil{
+	fmt.Println("Initializing the database.......")
+	db, err = sql.Open("mysql", "LoginUser:LoginPassword@tcp(127.0.0.1:3306)/User_Login_Database")
+	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Database has been initialize successfully")
 }
