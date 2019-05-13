@@ -140,3 +140,40 @@ func Storedb(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(" Registered Successully!"))
 }
+
+func TermsandConditions(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		http.ServeFile(w, r, "terms.html")
+	case "POST":
+		http.Redirect(w, r, "/", 301)
+	default:
+		fmt.Fprintf(w, "Service only Supports GET and POST")
+
+	}
+
+}
+
+func Vote(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("Vote Handler has been called!")
+	switch r.Method {
+	case "GET":
+
+		http.ServeFile(w, r, "vote.html")
+
+	case "POST":
+
+		if err := r.ParseForm(); err != nil {
+			fmt.Fprintf(w, "ParseForm() err: %v", err)
+			return
+		}
+		res := r.Form.Get("Party_Name")
+		fmt.Println("party values is ", res)
+
+	default:
+		fmt.Fprintf(w, "Service only Supports GET and POST")
+	}
+	fmt.Println("Vote Handler is about to end ")
+	w.Write([]byte("Vote !"))
+}
