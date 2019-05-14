@@ -5,11 +5,26 @@
     <title></title>
 </head>
 <body>
+        <style>
+                marquee {
+                     width: 100%;
+                     padding: 10px 0;
+                     background-color: yellow;
+                   }
+             </style>
 <h1>Login Page</h1>
 <form method="POST" action="/login">
-    <input type="text" name="username" placeholder="username">
-    <input type="password" name="password" placeholder="password">
-    <input type="submit" value="Submit">
+    <input type="text" name="username" placeholder="username"><br>
+    <input type="password" name="password" placeholder="password"><br>
+    <input type="submit" value="Submit"><br>
+    
+     <marquee behavior="scroll" bgcolor="yellow" loop="-1" width="30%">
+     <i><font color="blue"><strong>Today's date is :<span id="time"></span></strong>  </font></i>
+       <script>
+         var today = new Date();
+      document.getElementById('time').innerHTML=today;
+       </script>
+     </marquee>
 </form>
 </body>
 </html>

@@ -22,6 +22,11 @@ func main() {
 	http.HandleFunc("/", Homepage)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/stored", Storedb)
+	http.HandleFunc("/vote", Vote)
+	http.HandleFunc("/terms&conditions", TermsandConditions)
+	http.HandleFunc("/result", Result)
+	http.HandleFunc("/final", Final)
+
 	// initialize database
 	initDB()
 	log.Fatal(http.ListenAndServe(":8085", nil))
