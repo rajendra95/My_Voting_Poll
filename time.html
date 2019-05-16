@@ -1,0 +1,26 @@
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Today's Date</title>
+</head>
+
+<body>
+<style>
+   marquee {
+        width: 100%;
+        padding: 10px 0;
+        background-color: lightblue;
+      }
+</style>
+<marquee behavior="scroll" bgcolor="yellow" loop="-1" width="30%">
+<i><font color="blue"><strong>Today's date is :<span id="time"></span></strong>  </font></i>
+  <script>
+    var today = new Date();
+ document.getElementById('time').innerHTML=today;
+  </script>
+</marquee>
+</body>
+
+</html>
