@@ -5,21 +5,49 @@ import (
 	"fmt"
 	"net/http"
 	"text/template"
+	"encoding/gob"
 	//"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
-	"github.com/Sirupsen/logrus"
+
 	"github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type User struct {
+
+	Username string
+	Authenticated bool
+}
 var err error
+
 //Session name to store session under
 const SessionName  ="Voting-Session"
 
-var (
-	sessionStore sessions.Store
-	log = logrus.WithField("cmd",SessionName)
-)
+var sessionStore *sessions.CookieStore
+
+func init(){
+	authKeyOne:=securecookie.GenerateRandomKey(64)
+	encryptionKeyOne:=securecookie.GenerateRandomKey(32)
+	sessionStore=sessions.NewCookieStore(
+		authKeyOne,
+		encryptionKeyOne,
+	)
+	sessionStore.Options=& sessions.Options{path:"/",MaxAge:60*15,HttpOnly:true}
+	gob.Register(User{})
+}
+
+
+// getUser returns a user from session s
+// on error returns an empty user
+func getUser(s *sessions.Session) User {
+	val := s.Values["user"]
+	var user = User{}
+	user, ok := val.(User)
+	if !ok {
+		return User{Authenticated: false}
+	}
+	return user
+}
 
 // to handle the error if anything goes wrong
 func handleSessionError(w http.ResponseWriter, err error){
@@ -76,6 +104,13 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+
 	if r.Method != "POST" {
 		http.ServeFile(w, r, "login.html")
 		return
@@ -89,29 +124,37 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = db.QueryRow("SELECT username, password FROM users WHERE username=?", username).Scan(&dbusername, &dbpassword)
 	if err != nil {
 		w.Write([]byte("User Does Not Exist"))
+		session.AddFlash("USER DOES NOT EXIST")
+		err=session.Save(r,w)
+		if err!=nil{
+			handleSessionError(w,err)
+		}
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(dbpassword), []byte(password))
 	if err != nil {
 		w.Write([]byte("Credentials Did not Match!"))
+		session.AddFlash("Credentials Did not Match!")
+		err=session.Save(r,w)
+		if err!=nil{
+			handleSessionError(w,err)
+		}
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
 
 	// Session-handling
-	session,err:=sessionStore.Get(r,username)
-	if err!=nil{
-		handleSessionError(w,err)
-		return
+
+	user:=&User{
+		Username:username,
+		Authenticated:true,
 	}
-	session.Values["username"]=username
+	session.Values["user"]= user
 	if err:=session.Save(r,w);err!=nil{
 		handleSessionError(w,err)
 		return
 	}
-	log.WithField("username",username).Info("Completed Login & Session is saved")
-
 	//redirect  to the next page.
 	http.Redirect(w, r, "/register", 301)
 }
@@ -138,6 +181,18 @@ func Homepage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
 }
 func Register(w http.ResponseWriter, r *http.Request) {
+
+	// session continuation from Login page
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+	if err:=session.Save(r,w);err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+
 	if r.Method != "POST" {
 		http.ServeFile(w, r, "register.html")
 	}
@@ -145,6 +200,16 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func TermsandConditions(w http.ResponseWriter, r *http.Request) {
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+	if err:=session.Save(r,w);err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+
 	switch r.Method {
 	case "GET":
 		http.ServeFile(w, r, "terms.html")
@@ -155,6 +220,17 @@ func TermsandConditions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func Storedb(w http.ResponseWriter, r *http.Request) {
+
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+	if err:=session.Save(r,w);err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+
 	var VoterID, LastName, FirstName, Age, Sex, State, City string
 	switch r.Method {
 	case "GET":
@@ -183,6 +259,17 @@ func Storedb(w http.ResponseWriter, r *http.Request) {
 }
 
 func Vote(w http.ResponseWriter, r *http.Request) {
+
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+	if err:=session.Save(r,w);err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+
 	var Party_Name string
 	switch r.Method {
 	case "GET":
@@ -216,6 +303,16 @@ func outputHTML(w http.ResponseWriter, filename string, data interface{}) {
 }
 
 func Result(w http.ResponseWriter, r *http.Request) {
+
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+	if err:=session.Save(r,w);err!=nil{
+		handleSessionError(w,err)
+		return
+	}
 
 	var count1, count2, count3 int
 	type sample struct {
@@ -279,18 +376,18 @@ func Result(w http.ResponseWriter, r *http.Request) {
 }
 
 func Final(w http.ResponseWriter, r *http.Request) {
+
+	session,err:=sessionStore.Get(r,SessionName)
+	if err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+	if err:=session.Save(r,w);err!=nil{
+		handleSessionError(w,err)
+		return
+	}
+
 	if r.Method == "GET" {
 		http.ServeFile(w, r, "final.html")
 	}
 }
-
-
-
-//links to Follow
-//https://devcenter.heroku.com/articles/go-sessions
-//https://github.com/heroku-examples/go-sessions-demo/blob/master/main.go
-//https://curtisvermeeren.github.io/2018/05/13/Golang-Gorilla-Sessions
-//https://github.com/CurtisVermeeren/Gorilla-Sessions-Tutorial/blob/master/CookiestoreSession/main.go
-//https://github.com/rivo/sessions
-//https://gowebexamples.com/sessions/
-
