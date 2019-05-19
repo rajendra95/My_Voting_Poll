@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 type User struct {
@@ -110,6 +111,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Login Handler called")
+
 	session, err := sessionStore.Get(r, SessionName)
 	fmt.Println("value of Sesion is ", session)
 	fmt.Println("value of error is ", err)
@@ -142,11 +144,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = bcrypt.CompareHashAndPassword([]byte(dbpassword), []byte(password))
 	if err != nil {
 		w.Write([]byte("Credentials Did not Match!"))
-		session.AddFlash("Credentials Did not Match!")
-		err = session.Save(r, w)
-		if err != nil {
-			handleSessionError(w, err)
-		}
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
@@ -157,7 +154,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Username:      username,
 		Authenticated: true,
 	}
-	session.Values["user"] = user
+
+	// a new session will be created when user sucessfully logged IN
+	session,_:= sessionStore.New(r,SessionName)
+
+	session.Values["userername"] = user.Username
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
 		return
@@ -187,20 +188,28 @@ func Homepage(w http.ResponseWriter, r *http.Request) {
 }
 func Register(w http.ResponseWriter, r *http.Request) {
 
-	// session continuation from Login page
+	 type LoggedINUser struct{
+		username string
+		 RandomString string
+	}
 	session, err := sessionStore.Get(r, SessionName)
 	if err != nil {
 		handleSessionError(w, err)
 		return
 	}
-	if err := session.Save(r, w); err != nil {
-		handleSessionError(w, err)
-		return
+	if session.Values["username"]!="" {
+		if err := session.Save(r, w); err != nil {
+			handleSessionError(w, err)
+			return
+		}
 	}
+	u:=LoggedINUser{RandomString:"Logged User:-", Username:session.Values["username"]}
+	outputHTML(w,"reister.html",u)
 
 	if r.Method != "POST" {
 		http.ServeFile(w, r, "register.html")
 	}
+	outputHTML(w, "final.html", u)
 	http.Redirect(w, r, "/stored", 301)
 }
 
