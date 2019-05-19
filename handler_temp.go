@@ -2,10 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"text/template"
-	"encoding/gob"
+
 	//"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 
@@ -14,28 +15,29 @@ import (
 )
 
 type User struct {
-
-	Username string
+	Username      string
 	Authenticated bool
 }
+
 var err error
 
 //Session name to store session under
-const SessionName  ="Voting-Session"
+const SessionName = "Voting-Session"
 
 var sessionStore *sessions.CookieStore
 
-func init(){
-	authKeyOne:=securecookie.GenerateRandomKey(64)
-	encryptionKeyOne:=securecookie.GenerateRandomKey(32)
-	sessionStore=sessions.NewCookieStore(
+func init() {
+	fmt.Println("Init function called")
+	authKeyOne := securecookie.GenerateRandomKey(64)
+	encryptionKeyOne := securecookie.GenerateRandomKey(32)
+	sessionStore = sessions.NewCookieStore(
 		authKeyOne,
 		encryptionKeyOne,
 	)
-	sessionStore.Options=& sessions.Options{path:"/",MaxAge:60*15,HttpOnly:true}
+	sessionStore.Options = &sessions.Options{Path: "/", MaxAge: 60 * 15, HttpOnly: true}
 	gob.Register(User{})
+	fmt.Println("Init function has been ended")
 }
-
 
 // getUser returns a user from session s
 // on error returns an empty user
@@ -50,13 +52,13 @@ func getUser(s *sessions.Session) User {
 }
 
 // to handle the error if anything goes wrong
-func handleSessionError(w http.ResponseWriter, err error){
-	log.WithField("err",err).Info("Error handling session")
-	http.Error(w,"Application Error", http.StatusInternalServerError)
+func handleSessionError(w http.ResponseWriter, err error) {
+	fmt.Println("session handler has invoked the error")
+	http.Error(w, "Unable to retrieve the session data", http.StatusInternalServerError)
 }
 
-
 func Signup(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("SignUP Called")
 	if r.Method != "POST" {
 		http.ServeFile(w, r, "signup.html")
 		return
@@ -92,7 +94,8 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Unable to create your account (TWO)", http.StatusInternalServerError)
 			return
 		}
-		w.Write([]byte("User Accout Created"))
+		fmt.Println("User Account Has been created")
+	//	w.Write([]byte("User Accout Created"))
 
 	case err != nil:
 		http.Error(w, "Unable to create your account (THREE)", http.StatusInternalServerError)
@@ -100,14 +103,18 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
-	http.Redirect(w, r, "/", http.StatusOK)
+	http.Redirect(w, r, "/", 301)
+	fmt.Println("SignUP has been ended")
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
 
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	fmt.Println("Login Handler called")
+	session, err := sessionStore.Get(r, SessionName)
+	fmt.Println("value of Sesion is ", session)
+	fmt.Println("value of error is ", err)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
@@ -125,9 +132,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("User Does Not Exist"))
 		session.AddFlash("USER DOES NOT EXIST")
-		err=session.Save(r,w)
-		if err!=nil{
-			handleSessionError(w,err)
+		err = session.Save(r, w)
+		if err != nil {
+			handleSessionError(w, err)
 		}
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
@@ -136,9 +143,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("Credentials Did not Match!"))
 		session.AddFlash("Credentials Did not Match!")
-		err=session.Save(r,w)
-		if err!=nil{
-			handleSessionError(w,err)
+		err = session.Save(r, w)
+		if err != nil {
+			handleSessionError(w, err)
 		}
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
@@ -146,36 +153,34 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	// Session-handling
 
-	user:=&User{
-		Username:username,
-		Authenticated:true,
+	user := &User{
+		Username:      username,
+		Authenticated: true,
 	}
-	session.Values["user"]= user
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	session.Values["user"] = user
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 	//redirect  to the next page.
 	http.Redirect(w, r, "/register", 301)
 }
 
+func Logout(w http.ResponseWriter, r *http.Request) {
 
-func Logout(w http.ResponseWriter, r *http.Request){
-
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	session.Values["username"]=""
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	session.Values["username"] = ""
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	log.Info(" Successfully LOG OUT")
-	http.Redirect(w,r,"/",301)
+
+	http.Redirect(w, r, "/", 301)
 }
-
 
 func Homepage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
@@ -183,13 +188,13 @@ func Homepage(w http.ResponseWriter, r *http.Request) {
 func Register(w http.ResponseWriter, r *http.Request) {
 
 	// session continuation from Login page
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
@@ -200,13 +205,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func TermsandConditions(w http.ResponseWriter, r *http.Request) {
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
@@ -221,13 +226,13 @@ func TermsandConditions(w http.ResponseWriter, r *http.Request) {
 }
 func Storedb(w http.ResponseWriter, r *http.Request) {
 
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
@@ -260,13 +265,13 @@ func Storedb(w http.ResponseWriter, r *http.Request) {
 
 func Vote(w http.ResponseWriter, r *http.Request) {
 
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
@@ -283,7 +288,7 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 	default:
 		fmt.Fprintf(w, "Service only Supports GET and POST")
 	}
-	_, err := db.Exec("INSERT INTO parties(Party_Name)VALUES(?)", Party_Name)
+	_, err = db.Exec("INSERT INTO parties(Party_Name)VALUES(?)", Party_Name)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -304,13 +309,13 @@ func outputHTML(w http.ResponseWriter, filename string, data interface{}) {
 
 func Result(w http.ResponseWriter, r *http.Request) {
 
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
@@ -377,13 +382,13 @@ func Result(w http.ResponseWriter, r *http.Request) {
 
 func Final(w http.ResponseWriter, r *http.Request) {
 
-	session,err:=sessionStore.Get(r,SessionName)
-	if err!=nil{
-		handleSessionError(w,err)
+	session, err := sessionStore.Get(r, SessionName)
+	if err != nil {
+		handleSessionError(w, err)
 		return
 	}
-	if err:=session.Save(r,w);err!=nil{
-		handleSessionError(w,err)
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
 		return
 	}
 
