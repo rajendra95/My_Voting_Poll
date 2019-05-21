@@ -31,7 +31,7 @@ var loggeduserSession = sessions.NewCookieStore([]byte(encryptionKey))
 func init() {
 	fmt.Println("Init function called")
 
-	loggeduserSession.Options = &sessions.Options{Path: "/", MaxAge: 60 * 15, HttpOnly: true}
+	loggeduserSession.Options = &sessions.Options{Path: "/", MaxAge: 86400 * 1, HttpOnly: true}
 	///	gob.Register(User{})
 	fmt.Println("Init function has been ended")
 }
@@ -95,7 +95,9 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	u := User{}
 	fmt.Println("Login Handler called")
+
 	session, err := loggeduserSession.Get(r, SessionName)
+
 	fmt.Println("value of Sesion is ", session)
 	fmt.Println("value of error is ", err)
 	if err != nil {
@@ -140,6 +142,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	*/
 	// a new session will be created when user sucessfully logged IN
 	session, err = loggeduserSession.New(r, SessionName)
+	fmt.Println("session values", session)
+	fmt.Println("error value is ", err)
 	if err != nil {
 		handleSessionError(w, err)
 	}
@@ -164,7 +168,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	session.Values["username"] = ""
-	loggeduserSession.MaxAge(-1)
+	//loggeduserSession.MaxAge(-1)
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
 		return
@@ -188,12 +192,15 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		handleSessionError(w, err)
 		return
 	}
-	if session.Values["username"] != "" {
-		if err := session.Save(r, w); err != nil {
-			handleSessionError(w, err)
-			return
-		}
+	if session.Values["username"] == "" {
+		//NO USER found
+		http.Redirect(w, r, "/forbidden", 301)
 	}
+	if err := session.Save(r, w); err != nil {
+		handleSessionError(w, err)
+		return
+	}
+
 	if r.Method != "POST" {
 		http.ServeFile(w, r, "register.html")
 	}
@@ -210,12 +217,19 @@ func TermsandConditions(w http.ResponseWriter, r *http.Request) {
 		handleSessionError(w, err)
 		return
 	}
+
+	if session.Values["username"] == "" {
+		//NO USER found
+		http.Redirect(w, r, "/forbidden", 301)
+	}
+
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
 		return
 	}
 	u = User{Username: session.Values["username"], Authenticated: true}
 	outputHTML(w, "terms.html", u)
+
 	switch r.Method {
 	case "GET":
 		http.ServeFile(w, r, "terms.html")
@@ -231,6 +245,10 @@ func Storedb(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handleSessionError(w, err)
 		return
+	}
+	if session.Values["username"] == "" {
+		//NO USER found
+		http.Redirect(w, r, "/forbidden", 301)
 	}
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
@@ -273,6 +291,15 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 		handleSessionError(w, err)
 		return
 	}
+	fmt.Println("Before POST VOTE check username is present or not")
+	fmt.Println("Value of Signed-IN user", session.Values["username"])
+	if session.Values["username"] == "" {
+		//NO USER
+		fmt.Println("Redirecting to forbidden page as no user found")
+		http.Redirect(w, r, "/forbidden", 301)
+		return
+	}
+
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
 		return
@@ -283,6 +310,11 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		http.ServeFile(w, r, "vote.html")
 	case "POST":
+		/*
+			if session.Values["username"] == "" {
+				fmt.Println("Value of Logged in User is", session.Values["username"])
+				http.Redirect(w, r, "/forbidden", 301)
+			}*/
 		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(w, "ParseForm() err: %v", err)
 			return
@@ -291,6 +323,12 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 	default:
 		fmt.Fprintf(w, "Service only Supports GET and POST")
 	}
+	/*
+		fmt.Println("before taking the vote check the user session again")
+		fmt.Println("Value of Logged in User is", session.Values["username"])
+		if session.Values["username"] == "" {
+			http.Redirect(w, r, "/forbidden", 301)
+		} */
 	_, err = db.Exec("INSERT INTO parties(Party_Name)VALUES(?)", Party_Name)
 	if err != nil {
 		panic(err.Error())
@@ -318,6 +356,10 @@ func Result(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handleSessionError(w, err)
 		return
+	}
+	if session.Values["username"] == "" {
+		//NO USER found
+		http.Redirect(w, r, "/forbidden", 301)
 	}
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
@@ -394,6 +436,10 @@ func Final(w http.ResponseWriter, r *http.Request) {
 		handleSessionError(w, err)
 		return
 	}
+	if session.Values["username"] == "" {
+		//NO USER found
+		http.Redirect(w, r, "/forbidden", 301)
+	}
 	if err := session.Save(r, w); err != nil {
 		handleSessionError(w, err)
 		return
@@ -402,4 +448,11 @@ func Final(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		http.ServeFile(w, r, "final.html")
 	}
+}
+func forbidden(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("forbidden handler is called")
+	fmt.Println("r.method is", r.Method)
+	http.ServeFile(w, r, "forbidden.html")
+	return
+
 }
