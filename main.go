@@ -20,6 +20,8 @@ func main() {
 	http.HandleFunc("/signup", Signup)
 	http.HandleFunc("/login", Login)
 	http.HandleFunc("/", Homepage)
+	http.HandleFunc("/forbidden", forbidden)
+	http.HandleFunc("/logout", Logout)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/stored", Storedb)
 	http.HandleFunc("/vote", Vote)
