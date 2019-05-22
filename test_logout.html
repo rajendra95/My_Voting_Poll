@@ -4,17 +4,15 @@
      <title>Disable Browser Back buttons</title>
    <script type="text/javascript" language="javascript">
 
-function DisableBackButton() {
-window.history.forward()
-}
-DisableBackButton();
-window.onload = DisableBackButton;
-window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
-window.onunload = function() { void (0) }
+     window.history.forward();
+	function noBack() { window.history.forward(); }
+        window.onbeforeunload = function() { return "You work will be lost."; };
 </script>
 </head>
 <body>
     <h1> Successfully Log Out </h1>
+     onload="noBack();" 
+	onpageshow="if (event.persisted) noBack();" onunload="">
 
     
 </body>
