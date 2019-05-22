@@ -3,48 +3,24 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html";charset=UTF-8">
     <title>Logout</title>
-    <script  type="text/javascript">
-	(function(global){
-if(typeof(global)=="undefined"{
-	throw new Error("Window is Undefined");
-}
-var _hash="!";
-var noBackPlease=function(){
-	global.location.href+="#";
-	global.setTimeout(function(){
-		global.location.href+="!";
-		
-	},50);
-	};
-
-global.onhashchange=function(){
-	if (global.location.hash !=_hash{
-		global.location.hash =_hash;
-	}
-};
-
-global.onload=function(){
-	noBackPlease();
-	
-	document.body.onkeydown=function(e){
-		var elm=e.target.nodeName.toLowerCase();
-		
-		if (e.which ===8 &&(elm!=='input'&& elm!=='textarea')){
-			e.preventDefault();
-		}
-		e.stopPropagation();
-	};
-}
-})(window);
-	</script>
+	<style type="text/css">
+        body
+        {
+            font-family: Arial;
+            font-size: 10pt;
+        }
+        a, a:visited
+        {
+            color: Blue;
+        }
+    </style>							  
+    <script type="text/javascript">
+        function preventBack() { window.history.forward(); }
+        setTimeout("preventBack()", 0);
+        window.onunload = function () { null };
+    </script>
 </head>
 <body>
-    <%
-	response.setHeader("Pragma","no-cache");
-	response.setHeader("Cache-Control","no-store");
-	response.setHeader("Expires","0");
-	response.setDateHeader("Expires","-1");
-	session.invalidate();
-	%>
+ 
 </body>
 </html>
