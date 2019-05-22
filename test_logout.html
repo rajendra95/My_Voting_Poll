@@ -1,19 +1,50 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-     <title>Disable Browser Back buttons</title>
-   <script type="text/javascript" language="javascript">
+<meta http-equiv="Content-Type" content="text/html";charset=UTF-8">
+    <title>Logout</title>
+    <script  type="text/javascript">
+	(function(global){
+if(typeof(global)=="undefined"{
+	throw new Error("Window is Undefined");
+}
+var _hash="!";
+var noBackPlease=function(){
+	global.location.href+="#";
+	global.setTimeout(function(){
+		global.location.href+="!";
+		
+	},50);
+	};
 
-     window.history.forward();
-	function noBack() { window.history.forward(); }
-        window.onbeforeunload = function() { return "You work will be lost."; };
-</script>
+global.onhashchange=function(){
+	if (global.location.hash !=_hash{
+		global.location.hash =_hash;
+	}
+};
+
+global.onload=function(){
+	noBackPlease();
+	
+	document.body.onkeydown=function(e){
+		var elm=e.target.nodeName.toLowerCase();
+		
+		if (e.which ===8 &&(elm!=='input'&& elm!=='textarea')){
+			e.preventDefault();
+		}
+		e.stopPropagation();
+	};
+}
+})(window);
+	</script>
 </head>
 <body>
-    <h1> Successfully Log Out </h1>
-     onload="noBack();" 
-	onpageshow="if (event.persisted) noBack();" onunload="">
-
-    
+    <%
+	response.setHeader("Pragma","no-cache");
+	response.setHeader("Cache-Control","no-store");
+	response.setHeader("Expires","0");
+	response.setDateHeader("Expires","-1");
+	session.invalidate();
+	%>
 </body>
 </html>
