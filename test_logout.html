@@ -1,18 +1,21 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Home</title>
-    <script type="text/javascript">
-        function preventBack() { window.history.forward(); }
-        setTimeout("preventBack()", 0);
-        window.onunload = function () { null };
-    </script>
+     <title>Disable Browser Back buttons</title>
+   <script type="text/javascript" language="javascript">
+
+function DisableBackButton() {
+window.history.forward()
+}
+DisableBackButton();
+window.onload = DisableBackButton;
+window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
+window.onunload = function() { void (0) }
+</script>
 </head>
 <body>
     <h1> Successfully Log Out </h1>
- <META Http-Equiv="Cache-Control" Content="no-cache">
-<META Http-Equiv="Pragma" Content="no-cache">
-<META Http-Equiv="Expires" Content="0">
+
     
 </body>
 </html>
