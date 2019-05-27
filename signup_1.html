@@ -1,69 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-<style type="text/css">
-label {
-    display: block;
-    font: .9rem 'Fira Sans', sans-serif;
-}
+<script type="text/javascript">
 
-input[type='submit'],
-label {
-    margin-top: 1rem;
-}
-</style>
+  function checkPassword(str)
+  {
+    var re = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
+    return re.test(str);
+  }
 
-<style>
-        marquee {
-             width: 100%;
-             padding: 10px 0;
-             background-color: yellow;
-           }
-  </style>
-  
-  
- <meta charset="UTF-8">
- <title>Title</title>
- </head>
- <body>
-<script>
-function validate(){
-    var regName = /^[a-zA-Z]+$/;
-    var name = document.getElementById('name').value;
-    if(!regName.test(name)){
-        alert('Please enter your full name (first & last name).');
-        document.getElementById('name').focus();
-        return false;
-    }else{
-        alert('Valid name given.');
-        return true;
+  function checkForm(form)
+  {
+    if(form.username.value == "") {
+      alert("Error: Username cannot be blank!");
+      form.username.focus();
+      return false;
     }
-}
+    re = /^\w+$/;
+    if(!re.test(form.username.value)) {
+      alert("Error: Username must contain only letters, numbers and underscores!");
+      form.username.focus();
+      return false;
+    }
+    if(form.pwd1.value != "" && form.pwd1.value == form.pwd2.value) {
+      if(!checkPassword(form.pwd1.value)) {
+        alert("The password you have entered is not valid!");
+        form.pwd1.focus();
+        return false;
+      }
+    } else {
+      alert("Error: Please check that you've entered and confirmed your password!");
+      form.pwd1.focus();
+      return false;
+    }
+    return true;
+  }
+
 </script>
 
-
- <marquee behavior="scroll" bgcolor="yellow" loop="-1" width="30%">
-     <i><font color="blue"><strong>Today's date is :<span id="time"></span></strong>  </font></i>
-       <script>
-         var today = new Date();
-      document.getElementById('time').innerHTML=today;
-       </script>
-  </marquee>
-  
-<div>
-<label for="username">Username:</label>
-    <input type="text" id="name" name="username">
-</div>    
-<div>
-    <label for="pass">Password :</label>
-    <input type="password" id="pass" name="password"
-           minlength="8" required>
-</div>
-
-
-<input type="submit" onclick="validate();" value="Submit">
-
-</body>
-</html>
-
-
+<form method="POST" action="/signup" onsubmit="return checkForm(this);">
+<fieldset>
+<legend>Sign Up </legend>
+<p>Username: <input title="Enter your username" type="text" required pattern="\w+" name="username"></p>
+<p>Password: <input title="Password must contain at least 6 characters, including UPPER/lowercase and numbers" type="password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" name="pwd1" onchange="
+  this.setCustomValidity(this.validity.patternMismatch ? this.title : '');
+  if(this.checkValidity()) form.pwd2.pattern = RegExp.escape(this.value);
+"></p>
+<p>Confirm Password: <input title="Please enter the same Password as above" type="password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" name="pwd2" onchange="
+  this.setCustomValidity(this.validity.patternMismatch ? this.title : '');
+"></p>
+<p><input type="submit" value="Save Changes"></p>
+</fieldset>
+</form>
