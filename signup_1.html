@@ -1,3 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style type="text/css">
+label {
+    display: block;
+    font: .9rem 'Fira Sans', sans-serif;
+}
+
+input[type='submit'],
+label {
+    margin-top: 1rem;
+	
+	
+	 marquee {
+             width: 100%;
+             padding: 10px 0;
+             background-color: yellow;
+           }
+}
+</style>
+</head>
+
+
+
+<body>
 <script type="text/javascript">
 
   function checkPassword(str)
@@ -35,7 +61,7 @@
 
 </script>
 
-<form method="POST" action="/signup" onsubmit="return checkForm(this);">
+<form method="POST" action="..." onsubmit="return checkForm(this);">
 <fieldset>
 <legend>Sign Up </legend>
 <p>Username: <input title="Enter your username" type="text" required pattern="\w+" name="username"></p>
@@ -49,3 +75,13 @@
 <p><input type="submit" value="Save Changes"></p>
 </fieldset>
 </form>
+
+<marquee behavior="scroll" bgcolor="yellow" loop="-1" width="30%">
+     <i><font color="blue"><strong>Today's date is :<span id="time"></span></strong>  </font></i>
+       <script>
+         var today = new Date();
+      document.getElementById('time').innerHTML=today;
+       </script>
+</marquee>
+</body>
+</html>
