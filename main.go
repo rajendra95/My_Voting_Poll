@@ -24,6 +24,8 @@ func main() {
 	http.HandleFunc("/logout", Logout)
 	http.HandleFunc("/register", Register)
 	http.HandleFunc("/stored", Storedb)
+        http.HandleFunc("/forgetpass", ForgotPassword)
+	http.HandleFunc("/resetpass", ResetPassword)
 	http.HandleFunc("/vote", Vote)
 	http.HandleFunc("/terms&conditions", TermsandConditions)
 	http.HandleFunc("/result", Result)
