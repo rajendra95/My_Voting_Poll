@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <title></title>
 </head>
+<p align=right> <img src="https://cdn1.iconfinder.com/data/icons/business-charts/512/customer-512.png" alt="User" width="50" height="50"></p>
+<p align ="right"><b>User:-{{.Username}}</b></p>
+<form method="POST" action="/logout">
+  <button class="btn" style="float:right"onclick="myFunc()">Logout</button>
+</form>
+<script>
+    function myFunc(){
+        confirm("Do you want to LogOut?")
+    }
+</script>
+	
 <body>
     <center>
 <img src="http://www.thecolorsofindia.com/lion-capital/gifs/sarnath-lion.jpg" alt="Flowers in Chania" width="200" height="200">
@@ -52,7 +63,7 @@ func Validate(form){
 }
 
 </script>
-<form method="POST" action="/..." enctype="application/x-www-form-urlencoded"> 
+<form method="POST" action="/stored" enctype="application/x-www-form-urlencoded"> 
 <table width="450px">
 
 </tr>
